@@ -346,7 +346,7 @@ func (c *Client) writePump() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
-		c.conn.Close() // Cloing the connection can raise errors
+		c.conn.Close() // Closing the connection can raise errors
 	}()
 
 	for {

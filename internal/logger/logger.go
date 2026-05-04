@@ -127,7 +127,7 @@ func rotateOnStartup(filename string) error {
 	return nil
 }
 
-func Init(level string, env string, service string) error {
+func Init(level string, service string) error {
 	if err := os.MkdirAll("logs", 0755); err != nil {
 		return fmt.Errorf("create logs dir: %w", err)
 	}
@@ -155,11 +155,12 @@ func Init(level string, env string, service string) error {
 		zapcore.AddSync(&lumberjack.Logger{
 			Filename:   mainLog,
 			MaxSize:    100,
-			MaxBackups: 30,
+			MaxBackups: 10, // 30 backups seems a bit excessive, no?
 			MaxAge:     60,
 			Compress:   true,
 		}),
-		zapLevel,
+		zap.DebugLevel, // Switched the logger level to Debug so that all logs are saved in the file
+		// Useful for debugging, mainly
 	)
 
 	L = zap.New(
