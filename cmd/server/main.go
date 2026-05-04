@@ -15,6 +15,7 @@ import (
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/zync-chat-app/coms/internal/central"
 	"github.com/zync-chat-app/coms/internal/channels"
+	"github.com/zync-chat-app/coms/internal/cli"
 	"github.com/zync-chat-app/coms/internal/config"
 	"github.com/zync-chat-app/coms/internal/logchain"
 	"github.com/zync-chat-app/coms/internal/logger"
@@ -32,13 +33,20 @@ func main() {
 
 	// ── Config ────────────────────────────────────────────────────────────────
 	cfg, err := config.Load(*envFile) // Loads the env file config
-	if err != nil {                   // Errors if it's not found
+	if err != nil {                   // Errors if it's not found or poorly configured
 		fmt.Fprintf(os.Stderr, "Config error: %v\n", err)
+		fmt.Fprintln(os.Stderr, "Please configure the environment variables file and run again")
+		fmt.Fprintln(os.Stderr, "Disregard other errors that may appear.")
+		err := cli.OpenFileForEdit(*envFile) // Opens the env file for edition
+		if err != nil {
+			return
+		}
+		fmt.Fprintln(os.Stderr, "Please run the server again to apply the changes")
 		os.Exit(1)
 	}
 
 	// ── Logger ────────────────────────────────────────────────────────────────
-	if err := logger.Init(cfg.LogLevel, cfg.Env, "COMS"); err != nil { // Tries to initialize the logger using the log level from the config
+	if err := logger.Init(cfg.LogLevel, "COMS"); err != nil { // Tries to initialize the logger using the log level from the config
 		fmt.Fprintf(os.Stderr, "Logger init failed: %v\n", err) // Errors if it can't initialize
 		os.Exit(1)
 	}
@@ -188,6 +196,36 @@ func main() {
 			logger.Fatal("Server error", zap.Error(err))
 		}
 	}()
+
+	cliCtx, cancelCLI := context.WithCancel(context.Background())
+	defer cancelCLI()
+
+	repl := cli.New(os.Stdout)
+	repl.Register("help", func(ctx context.Context, args []string) error {
+		// Displays help about commands
+		fmt.Fprintln(os.Stdout, cli.HelpMessage(args))
+		return nil
+	})
+	repl.Register("envedit", func(ctx context.Context, args []string) error {
+		return cli.OpenFileForEdit(*envFile) // Opens the env file in the default editor
+	})
+	repl.Register("envshow", func(ctx context.Context, args []string) error {
+		// Prints a bunch of useful info about the server
+		fmt.Fprintf(os.Stdout, "Server ID: %s\n"+
+			"Server Name: %s\n"+"Server's Public Key: %s\n"+
+			"Listening on port %s\n"+"Central URL: %s\n",
+			cfg.ServerID, cfg.ServerName, cfg.Crypto.PublicKeyHex, cfg.Port, cfg.Central.BaseURL)
+		return nil
+	})
+	repl.Register("online", func(ctx context.Context, args []string) error {
+		fmt.Fprintf(os.Stdout, "online=%d\n", hub.OnlineCount()) // Shows the online count through the terminal
+		return nil
+	})
+	repl.Register("shutdown", func(ctx context.Context, args []string) error {
+		return syscall.Kill(os.Getpid(), syscall.SIGINT) // Starts the shutdown process below
+	})
+
+	go repl.Run(cliCtx, os.Stdin)
 
 	// ── Graceful Shutdown ─────────────────────────────────────────────────────
 	quit := make(chan os.Signal, 1)
