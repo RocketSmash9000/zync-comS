@@ -22,6 +22,21 @@ This repository shows how to build a comS that is fully compatible with the Zync
 
 ## Quick Start
 
+### Standalone executable
+
+**Prerequisite:** A registered server on the Zync Central server.
+
+**Steps to follow**
+1. Download the binary from the [releases](https://github.com/RocketSmash9000/zync-comS/releases/latest) tab for the operating system of choice.
+2. Run the binary on the terminal (`./coms` on Linux or `.\coms` on Windows).
+3. The output on the terminal will contain the public and private keys of the server.
+4. Copy and paste the contents of [`.env.example`](https://github.com/RocketSmash9000/zync-comS/blob/main/.env.example) into the editor that will open.
+5. Fill in the variables with the required information
+6. Save and close the editor.
+7. Run the binary again.
+
+### Build from source
+
 **Prerequisites:** Go 1.22+, a registered server on Zync Central.
 
 ```bash
