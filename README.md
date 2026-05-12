@@ -24,7 +24,7 @@ This repository shows how to build a comS that is fully compatible with the Zync
 
 ### Standalone executable
 
-**Prerequisite:** A registered server on the Zync Central server.
+**Prerequisite:** A registered server on the Zync Central server. *Optional, but highly recommended*
 
 **Steps to follow**
 1. Download the binary from the [releases](https://github.com/RocketSmash9000/zync-comS/releases/latest) tab for the operating system of choice.
@@ -55,7 +55,7 @@ go run cmd/server/main.go
 go run cmd/server/main.go
 ```
 
-Your comS will be available at `http://localhost:3000`.
+Your comS will be available at `http://localhost:3000` or `http://<Your-Machine's-IP>:3000`.
 
 ## Connecting
 
